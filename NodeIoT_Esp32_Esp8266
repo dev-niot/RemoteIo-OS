@@ -1,0 +1,367 @@
+/*
+######################################################################
+##      Integração das tecnologias da REMOTE IO com Node IOT        ##
+##                                                                  ##
+##   Código base para implementação de projetos de digitalização de ##
+##   processos, automação, coleta de dados e envio de comandos com  ##
+##   controle embarcado e na nuvem.                                 ##
+##                                                                  ##
+######################################################################
+*/
+
+#define USE_SERIAL Serial
+#define JSON_DOCUMENT_CAPACITY 1024
+
+#include <Arduino.h>
+#include <ArduinoJson.h>
+
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#elif defined(ESP32)
+#include <WiFi.h>
+#include <HTTPClient.h>
+#endif
+
+#include <WebSocketsClient.h>
+#include <SocketIOclient.h>
+
+SocketIOclient socketIO;
+
+const char ssid[] = <WIFI_NAME>;
+const char password[] = <WIFI_PASSWORD>;
+
+String companyName = "Node IOT";  // Nome da companhia que o dispositivo está conectado // TODO: codificar os espaços
+String deviceId = "controlador1"; // Nome do dispositivo mesmo nome configurado na Plataforma NodeIOT // TODO: codificar os espaços
+
+String appHost = <IP_BROKER>;
+uint16_t appPort = 5000;
+
+String appBaseUrl = "http://" + appHost + ':' + appPort + "/api";
+String appVerifyUrl = appBaseUrl + "/devices/verify";
+String appLastDataUrl = appBaseUrl + "/devices/getdata/" + companyName + "/" + deviceId;
+
+String appSocketPath = "/socket.io/?companyName=%22" + companyName + "%22&deviceId=%22" + deviceId + "%22&EIO=4";
+
+/*Configuração do Device*/
+
+String state = "";
+String token = "";
+
+int ledPin = 5;
+
+/*Armazenamento das RemoteIO's em JSON*/
+StaticJsonDocument<JSON_DOCUMENT_CAPACITY> configurationDocument;
+JsonArray configurations = configurationDocument.to<JsonArray>();
+JsonObject setIO = configurations.createNestedObject();
+
+/*Sinais para controle*/
+int dataUpdated = 0;
+int DataSend = 0;
+
+/*Variáveis Fixas para rotina de comunição*/
+bool Connected = false;
+int Socketed = 0;
+unsigned long messageTimestamp = 0;
+
+void tryAuthenticate();
+void fetchLatestData();
+
+void UpdatePinOutput(String Ref);
+
+#if defined(ESP32)
+void hexdump(const void *mem, uint32_t len, uint8_t cols = 16)
+{
+  const uint8_t *src = (const uint8_t *)mem;
+
+  USE_SERIAL.printf("\n[HEXDUMP] Address: 0x%08X len: 0x%X (%d)", (ptrdiff_t)src, len, len);
+
+  for (uint32_t i = 0; i < len; i++)
+  {
+    if (i % cols == 0)
+    {
+      USE_SERIAL.printf("\n[0x%08X] 0x%08X: ", (ptrdiff_t)src, i);
+    }
+    USE_SERIAL.printf("%02X ", *src);
+    src++;
+  }
+
+  USE_SERIAL.printf("\n");
+}
+#endif
+
+void LedControl(int Status)
+{
+  digitalWrite(ledPin, Status);
+}
+
+/*Função SocketIO.ON*/
+void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
+{
+  switch (type)
+  {
+  case sIOtype_DISCONNECT:
+    USE_SERIAL.printf("[IOc] Disconnected!\n");
+    Connected = false;
+    LedControl(0);
+    break;
+  case sIOtype_CONNECT:
+    USE_SERIAL.printf("[IOc] Connected to url: %s\n", payload);
+    socketIO.send(sIOtype_CONNECT, "/");
+    LedControl(1);
+    break;
+  case sIOtype_EVENT:
+  {
+    char *sptr = NULL;
+    int id = strtol((char *)payload, &sptr, 10);
+
+    USE_SERIAL.printf("[IOc] get event: %s id: %d\n", payload, id);
+    
+    if (id)
+    {
+      payload = (uint8_t *)sptr;
+    }
+
+    StaticJsonDocument<JSON_DOCUMENT_CAPACITY> doc;
+    DeserializationError error = deserializeJson(doc, payload, length);
+
+    if (error)
+    {
+      USE_SERIAL.print(F("[IOc]: deserializeJson() failed: "));
+      USE_SERIAL.println(error.c_str());
+      return;
+    }
+
+    String eventName = doc[0];
+
+    USE_SERIAL.printf("[IOc] event name: %s\n", eventName.c_str());
+
+    String ref = doc[1]["ref"];
+    String value = doc[1]["value"];
+
+    setIO[ref]["value"] = value;
+
+    if (setIO[ref]["Mode"] == "OUTPUT")
+    {
+      UpdatePinOutput(ref);
+    }
+  }
+  break;
+  case sIOtype_ACK:
+    USE_SERIAL.printf("[IOc] get ack: %u\n", length);
+    hexdump(payload, length);
+    break;
+  case sIOtype_ERROR:
+    USE_SERIAL.printf("[IOc] get error: %u\n", length);
+    hexdump(payload, length);
+    break;
+  case sIOtype_BINARY_EVENT:
+    USE_SERIAL.printf("[IOc] get binary: %u\n", length);
+    hexdump(payload, length);
+    break;
+  case sIOtype_BINARY_ACK:
+    USE_SERIAL.printf("[IOc] get binary ack: %u\n", length);
+    hexdump(payload, length);
+    break;
+  }
+}
+
+void setup()
+{
+  USE_SERIAL.begin(115200);
+  USE_SERIAL.setDebugOutput(true);
+
+  /*Conexão WiFi*/
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  WiFi.waitForConnectResult();
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    USE_SERIAL.print(".");
+  }
+
+  USE_SERIAL.printf("[SETUP] WiFi Connected %s\n", WiFi.localIP().toString().c_str());
+
+  appVerifyUrl.replace(" ", "%20");
+  appLastDataUrl.replace(" ", "%20");
+  appSocketPath.replace(" ", "%20");
+
+  // Função de verificar permissão do dispositivo
+  while (state != "accepted")
+  {
+    USE_SERIAL.print("trying to authenticate");
+    tryAuthenticate();
+
+    delay(4000);
+  }
+
+  // Depois de confirmado a permissão, chama função para carregar os ultimos valores salvos para/por este dispositivo
+
+  fetchLatestData();
+
+  // Conexão Websocket
+  //<nome da companhia> e <nome do controlador> se tiver espaço subtituir por %20
+  socketIO.begin(appHost, appPort, appSocketPath); // TODO: Não há necessidade do %22 (")
+  socketIO.onEvent(socketIOEvent);
+
+  // Set dos pinos
+
+  pinMode(ledPin, OUTPUT);
+}
+
+// Função WebSocket Connect
+void SocketIOConnect()
+{
+  uint64_t now = millis();
+  if (Socketed == 0)
+  {
+    StaticJsonDocument<JSON_DOCUMENT_CAPACITY> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add("connection");
+    JsonObject query = array.createNestedObject();
+    query["Query"]["CompanyName"] = companyName;
+    query["Query"]["deviceId"] = deviceId;
+
+    String output;
+    serializeJson(doc, output);
+    Socketed = socketIO.sendEVENT(output);
+    Socketed = 1;
+  }
+  if ((Socketed == 1) && (now - messageTimestamp > 2000) && (Connected == 0))
+  {
+    StaticJsonDocument<JSON_DOCUMENT_CAPACITY> doc;
+    JsonArray array = doc.to<JsonArray>();
+    messageTimestamp = now;
+    array.add("joinRoom");
+    JsonObject conectionId = array.createNestedObject();
+    conectionId["conectionId"] = companyName + ":" + deviceId;
+    String output;
+    serializeJson(doc, output);
+    Connected = socketIO.sendEVENT(output);
+    USE_SERIAL.println(Connected);
+  }
+}
+
+// Função Atualizar Pinos de saída
+void UpdatePinOutput(String Ref)
+{
+  int PinRef = setIO[Ref]["pin"].as<int>();
+  int ValueRef = setIO[Ref]["value"].as<int>();
+
+  Serial.println("Acionar saida");
+  Serial.println(PinRef);
+  Serial.println(ValueRef);
+  
+  digitalWrite(PinRef, !ValueRef);
+}
+
+void ReadInput()
+{
+}
+
+// Função principal
+void loop()
+{
+  socketIO.loop();
+
+  if (!Connected)
+  {
+    SocketIOConnect();
+  }
+}
+
+void tryAuthenticate()
+{
+  WiFiClient client;
+  HTTPClient http;
+
+  StaticJsonDocument<JSON_DOCUMENT_CAPACITY> document;
+  String request;
+
+  document["companyName"] = companyName;
+  document["deviceId"] = deviceId;
+  document["mac"] = WiFi.macAddress();
+
+  serializeJson(document, request);
+
+  http.begin(client, appVerifyUrl);
+  http.addHeader("Content-Type", "application/json");
+
+  int statusCode = http.POST(request);
+
+  if (statusCode == HTTP_CODE_OK)
+  {
+    document.clear();
+    deserializeJson(document, http.getStream());
+
+    state = document["state"].as<String>();
+
+    if (state == "accepted")
+    {
+      token = document["token"].as<String>();
+
+      String string;
+      serializeJsonPretty(document, string);
+
+      for (size_t i = 0; i < document["gpio"].size(); i++)
+      {
+        String ref = document["gpio"][i]["ref"];
+
+        int pin = document["gpio"][i]["pin"].as<int>();
+        String type = document["gpio"][i]["type"];
+
+        Serial.println(ref);
+        Serial.println(pin);
+        Serial.println(type);
+
+        setIO[ref]["pin"] = pin;
+        setIO[ref]["Mode"] = type;
+
+        pinMode(pin, type == "INPUT" ? INPUT : OUTPUT);
+      }
+    }
+
+    http.end();
+  }
+}
+
+void fetchLatestData()
+{
+  WiFiClient client;
+  HTTPClient http;
+
+  http.begin(client, appLastDataUrl);
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader("Authorization", "Bearer " + token);
+
+  int statusCode = http.GET();
+
+  if (statusCode == HTTP_CODE_OK)
+  {
+    StaticJsonDocument<JSON_DOCUMENT_CAPACITY> document;
+    deserializeJson(document, http.getStream());
+
+    for (size_t i = 0; i < document.size(); i++)
+    {
+      String auxRef = configurationDocument[i]["ref"];
+      String auxValue = configurationDocument[i]["data"]["value"];
+
+      if (auxValue == "null")
+      {
+        auxValue = "0";
+      }
+      
+      setIO[auxRef]["value"] = auxValue;
+      
+      if (setIO[auxRef]["Mode"] == "OUTPUT")
+      {
+        UpdatePinOutput(auxRef);
+      }
+    }
+  }
+
+  http.end();
+}
