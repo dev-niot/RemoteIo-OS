@@ -1,7 +1,7 @@
 /*
 ######################################################################
 ##      Integração das tecnologias da REMOTE IO com Node IOT        ##
-##                                                                  ##
+##                          Version 1.1                             ##
 ##   Código base para implementação de projetos de digitalização de ##
 ##   processos, automação, coleta de dados e envio de comandos com  ##
 ##   controle embarcado e na nuvem.                                 ##
@@ -28,14 +28,14 @@
 
 SocketIOclient socketIO;
 
-const char ssid[] = <WIFI_NAME>;
-const char password[] = <WIFI_PASSWORD>;
+const char ssid[] = <SSID_WIFI>;
+const char password[] = <PASSWORD_WIFI>;
 
-String companyName = "Node IOT";  // Nome da companhia que o dispositivo está conectado // TODO: codificar os espaços
-String deviceId = "controlador1"; // Nome do dispositivo mesmo nome configurado na Plataforma NodeIOT // TODO: codificar os espaços
+String companyName = "Treinamento";  // Nome da companhia que o dispositivo está conectado // TODO: codificar os espaços
+String deviceId = "Controlador1"; // Nome do dispositivo mesmo nome configurado na Plataforma NodeIOT // TODO: codificar os espaços
 
 String appHost = <IP_BROKER>;
-uint16_t appPort = 5000;
+uint16_t appPort = <PORT>;
 
 String appBaseUrl = "http://" + appHost + ':' + appPort + "/api";
 String appVerifyUrl = appBaseUrl + "/devices/verify";
@@ -54,7 +54,7 @@ int ledPin = 5;
 StaticJsonDocument<JSON_DOCUMENT_CAPACITY> configurationDocument;
 JsonArray configurations = configurationDocument.to<JsonArray>();
 JsonObject setIO = configurations.createNestedObject();
-
+JsonObject inputObj = configurations.createNestedObject();
 /*Sinais para controle*/
 int dataUpdated = 0;
 int DataSend = 0;
@@ -140,7 +140,7 @@ void socketIOEvent(socketIOmessageType_t type, uint8_t *payload, size_t length)
     String value = doc[1]["value"];
 
     setIO[ref]["value"] = value;
-
+ 
     if (setIO[ref]["Mode"] == "OUTPUT")
     {
       UpdatePinOutput(ref);
@@ -312,15 +312,26 @@ void tryAuthenticate()
 
         int pin = document["gpio"][i]["pin"].as<int>();
         String type = document["gpio"][i]["type"];
-
+        Serial.println(type);
         Serial.println(ref);
         Serial.println(pin);
-        Serial.println(type);
-
-        setIO[ref]["pin"] = pin;
-        setIO[ref]["Mode"] = type;
-
-        pinMode(pin, type == "INPUT" ? INPUT : OUTPUT);
+        
+        if (type == "INPUT")
+        {
+          setIO[ref]["pin"] = pin;
+          setIO[ref]["Mode"] = type;
+          inputObj[ref]["pin"]=pin;
+          inputObj[ref]["ref"]=ref;
+          pinMode(pin, INPUT);
+        } else if(type == "OUTPUT"){
+          setIO[ref]["pin"] = pin;
+          setIO[ref]["Mode"] = type;
+          pinMode(pin, OUTPUT);
+        } else {
+          setIO[ref]["pin"] = pin;
+          setIO[ref]["Mode"] = "N/L";
+          }
+        
       }
     }
 
@@ -365,3 +376,48 @@ void fetchLatestData()
 
   http.end();
 }
+
+
+// // Função HTTP POST, para enviar valores para o broker
+// void espPOST(String Router, String variable[], String data[])
+// {
+//   if ((WiFi.status() == WL_CONNECTED))
+//   {
+//     WiFiClient client;
+//     HTTPClient http;
+//     // Serial.println("POST");
+//     // Serial.print("[HTTP] begin...\n");
+//     http.begin(Router); // HTTP
+//     http.addHeader("Content-Type", "application/json");
+//     // Serial.print("[HTTP] POST...\n");
+//     String packet = "{";
+//     for (int x = 0; x <= vetorlength - 1; x++)
+//     {
+//       packet = packet + "\"" + data[x] + "\":\"" + variable[x] + "\"";
+//       if (x < vetorlength - 1)
+//       {
+//         packet = packet + ",";
+//       }
+//     }
+//     packet = packet + "}";
+//     // Serial.println(String(packet));
+//     int httpCode = http.POST(packet);
+//     if (httpCode > 0)
+//     {
+//       // Serial.printf("[HTTP] POST... code: %d\n", httpCode);
+//       if (httpCode == HTTP_CODE_OK)
+//       {
+//         const String &payload = http.getString();
+//         // Serial.println("received payload:\n<<");
+//         // Serial.println(payload);
+//         // Serial.println(">>");
+//       }
+//     }
+//     else
+//     {
+//       // Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+//     }
+//     DataSend = 0;
+//     http.end();
+//   }
+// }
