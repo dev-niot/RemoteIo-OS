@@ -65,8 +65,16 @@ Com os passos abaixo você poderá fazer a primeira interação de um dispositiv
 
 - Desconecte-se do ponto de acesso "RemoteIO" e conecte à rede de sua preferência.
 - Acesse sua conta [NodeIoT](https://nodeiot.app.br/).
+
+  ![Conta](https://github.com/user-attachments/assets/d4012363-2315-498f-bfec-b707dfa7cb74)
+
 - Faça a autenticação do seu dispositivo, conforme o [tutorial](site.da.node.tutorial).
-- Abra o [dashboard](https://nodeiot.app.br/dashboards) do seu dispositivo e utilize os componentes para interagir com o hardware RemoteIO. 
+
+  ![auth](https://github.com/user-attachments/assets/d87532be-b09a-4360-905b-5cc3433ad091)
+
+- Abra o [dashboard](https://nodeiot.app.br/dashboards) do seu dispositivo e utilize os componentes para interagir com o hardware RemoteIO.
+
+![dash](https://github.com/user-attachments/assets/e9c7f2c7-b2a4-4851-af17-6031a678b683)
 
 ## Documentação
 
