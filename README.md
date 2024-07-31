@@ -48,13 +48,21 @@ Com os passos abaixo você poderá fazer a primeira interação de um dispositiv
 
 ### Passo a passo
 
-- Registre-se na plataforma [NodeIoT](https://nodeiot.app.br/register). 
+- Registre-se na plataforma [NodeIoT](https://nodeiot.app.br/register).
+  
 ![Registro](https://github.com/user-attachments/assets/a476ef09-7335-486a-adc9-a17bc9648d9e)
+
 - Guarde o "Nome da instituição" definido durante seu registro. Ele será necessário para a configuração inicial do dispositivo RemoteIO.
 - Conecte a alimentação em seu dispositivo RemoteIO e ligue-o, conforme manual disponibilizado com o produto.
 - Em seu computador, verifique os pontos de acesso Wi-Fi disponíveis e conecte em "RemoteIO". Não é necessário senha.
+
+![Rede](https://github.com/user-attachments/assets/b17ac6fe-5324-402e-8c5a-25606d497fc8)
+
 - Após se conectar ao ponto de acesso, abra o browser de sua preferência (ex. Google Chrome, Mozilla Firefox) e acesse a URL: [http://192.168.4.1/]()
 - Na tela de configurações, insira as credenciais (nome e senha) da rede Wi-Fi que será utilizada para conexão do dispositivo. Abaixo, informe o "Nome da instituição" definido por você em seu registro [NodeIoT](https://nodeiot.app.br/register). Atente-se para preencher corretamente as informações acima solicitadas. Por último, crie um nome para identificar o dispositivo dentro da plataforma e clique em Salvar.
+
+![Setup](https://github.com/user-attachments/assets/62c7318c-cf3c-4162-b5c6-3c7955591bfd)
+
 - Desconecte-se do ponto de acesso "RemoteIO" e conecte à rede de sua preferência.
 - Acesse sua conta [NodeIoT](https://nodeiot.app.br/).
 - Faça a autenticação do seu dispositivo, conforme o [tutorial](site.da.node.tutorial).
