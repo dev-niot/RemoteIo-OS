@@ -14,6 +14,14 @@ Possibilita a leitura de sensores e acionamento de atuadores em tempo real, com 
   - [Primeiro uso](#primeiro-uso)
     - [Passo a passo](#passo-a-passo)
   - [Documentação](#documentação)
+  - [Classe RemoteIO](#classe-remoteio)
+    - [Atributos](#atributos)
+      - [setIO](#setio)
+    - [Métodos](#métodos)
+      - [begin](#begin)
+      - [loop](#loop)
+      - [updatePinOutput](#updatepinoutputstring-ref)
+      - [espPOST](#esppoststring-variable-string-value)
 
 ## Requisitos
 - Dispositivo [espressif32](https://www.espressif.com/en/products/socs/esp32).
@@ -85,9 +93,11 @@ void loop()
 
 A [documentação NodeIoT](https://nodeiot.com.br/docs) apresenta informações mais detalhadas para uso da ferramenta, onde estão disponíveis guias e exemplos para aprender a trabalhar com as entradas e saídas do dispositivo, integrando o meio físico à núvem para construir a solução ideal para seu projeto.
 
-## Atributos da classe RemoteIO
+## Classe RemoteIO
 
-### setIO
+### Atributos
+
+#### setIO
 
 Neste objeto ficam armazenadas as configurações do dispositivo, recebidas após a autenticação. 
 
@@ -102,3 +112,35 @@ Você poderá obter informações do setIO da seguinte maneira:
   int ledPin = setIO["led"]["pin"].as<int>();       // ledPin = 2
   int ledValue = setIO["led"]["value"].as<int>();   // ledValue = X            (obtém o último valor armazenado para a variável, depende das interações feitas no sistema)
 ```
+
+### Métodos
+
+#### begin()
+
+Inicializa o objeto RemoteIO e configura suas funcionalidades. Deve ser usado no setup do seu firmware para o correto funcionamento da comunicação entre dispositivo e NodeIoT.
+
+#### loop()
+
+Verifica as condições atuais do sistema e dispara ações conforme necessidade. Deve ser usado no loop do seu firmware para o correto funcionamento da comunicação entre dispositivo e NodeIoT.
+
+#### updatePinOutput(String ref)
+
+Atualiza, se configurado, o pino físico ligado à variável indicada pelo parâmetro "ref".
+
+Exemplo:
+```ini
+  setIO["led"]["value"] = 1;   // representa o estado lógico HIGH
+  
+  updatePinOutput("led");      // coloca o pino 2 em estado lógico HIGH, ligando o led
+```
+
+#### espPOST(String variable, String value)
+
+Envia à plataforma um novo valor "value" para a variável "variable".
+
+Se em seu dispositivo na NodeIoT você tiver uma variável cuja referência(Ref) é: sensor_temperatura
+Exemplo:
+```ini
+  espPOST("sensor_temperatura", "22.4");    // atualiza o valor que mostra a temperatura na plataforma
+```
+Com isso, se você tiver um componente tipo "Display" em seu dashboard, ligado à Ref "sensor_temperatura", verá o valor 22.4 sendo atualizado.
