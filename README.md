@@ -12,7 +12,8 @@ Possibilita a leitura de sensores e acionamento de atuadores em tempo real, com 
     - [Usando PlatformIO](#usando-platformio)
     - [Usando Arduino IDE](#usando-arduino-ide)
   - [Primeiro uso](#primeiro-uso)
-  - [Passo a passo](#passo-a-passo)
+    - [Passo a passo](#passo-a-passo)
+  - [Documentação](#documentação)
 
 ## Requisitos
 - Dispositivo [espressif32](https://www.espressif.com/en/products/socs/esp32).
@@ -82,5 +83,22 @@ void loop()
 
 ## Documentação
 
-A [documentação RemoteIO e NodeIoT](https://nodeiot.com.br/docs) apresenta informações mais detalhadas para uso da ferramenta, onde estão disponíveis guias e exemplos para aprender a trabalhar com as entradas e saídas do dispositivo, integrando o meio físico à núvem para construir a solução ideal para seu projeto.
+A [documentação NodeIoT](https://nodeiot.com.br/docs) apresenta informações mais detalhadas para uso da ferramenta, onde estão disponíveis guias e exemplos para aprender a trabalhar com as entradas e saídas do dispositivo, integrando o meio físico à núvem para construir a solução ideal para seu projeto.
 
+## Atributos da classe RemoteIO
+
+### setIO
+
+Neste objeto ficam armazenadas as configurações do dispositivo, recebidas após a autenticação. 
+
+Por exemplo, se no [Passo a passo](#passo-a-passo) você tiver criado um dispositivo com uma configuração semelhante a essa: 
+```ini
+  Ref             Variável                Configurações
+  led            led do PCB                OUTPUT     2
+```
+Você poderá obter informações do setIO da seguinte maneira:
+```ini
+  String mode = setIO["led"]["Mode"];               // mode = "OUTPUT"
+  int ledPin = setIO["led"]["pin"].as<int>();       // ledPin = 2
+  int ledValue = setIO["led"]["value"].as<int>();   // ledValue = X            (obtém o último valor armazenado para a variável, depende das interações feitas no sistema)
+```
