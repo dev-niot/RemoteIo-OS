@@ -14,18 +14,16 @@ Possibilita a leitura de sensores e acionamento de atuadores em tempo real, com 
   - [Primeiro uso](#primeiro-uso)
   - [Passo a passo](#passo-a-passo)
 
-
 ## Requisitos
-- Dispositivo [RemoteIO espressif32](link.pra.algum.lugar).
+- Dispositivo [espressif32](https://www.espressif.com/en/products/socs/esp32).
 - [PlatformIO](http://platformio.org) ou [Arduino IDE](https://www.arduino.cc/en/software).
 - Conta [NodeIoT](https://nodeiot.app.br/register).
-- Última versão estável do [esp32 Arduino core](https://github.com/espressif/arduino-esp32) instalada em sua IDE (PlatformIO ou Arduino IDE).
+- Última versão estável do [esp32 Arduino core](https://github.com/espressif/arduino-esp32) instalada em sua IDE ([PlatformIO](http://platformio.org) ou [Arduino IDE](https://www.arduino.cc/en/software)).
 
 ## Instalação
 
 ### Usando PlatformIO
-
-[PlatformIO](http://platformio.org) é um ecossistema de código aberto para o desenvolvimento de IoT com sistema de construção multiplataforma, gerenciador de bibliotecas e suporte completo para o desenvolvimento utilizando Espressif ESP8266/ESP32. Funciona nos sistemas operacionais populares: Mac OS X, Windows, Linux 32/64, Linux ARM (como Raspberry Pi, BeagleBone, CubieBoard).
+[PlatformIO](http://platformio.org) é um ecossistema de código aberto para o desenvolvimento de IoT com sistema de construção multiplataforma, gerenciador de bibliotecas e suporte completo para o desenvolvimento utilizando [Espressif](https://www.espressif.com/) ESP8266/ESP32. Funciona nos sistemas operacionais populares: Mac OS X, Windows, Linux 32/64, Linux ARM (como Raspberry Pi, BeagleBone, CubieBoard).
 
 1. Instale o [PlatformIO IDE](http://platformio.org/platformio-ide).
 2. Crie um novo projeto usando "PlatformIO Home > New Project".
@@ -44,39 +42,45 @@ lib_deps = gkraemer-niot@RemoteIO
 
 ## Primeiro uso
 
-Com os passos abaixo você poderá fazer a primeira interação de um dispositivo RemoteIO com a plataforma [NodeIoT](https://nodeiot.app.br/). Este é um guia para conectar seu dispositivo RemoteIO pela primeira vez e utilizar as funções predefinidas do módulo.
+Com os passos abaixo você poderá fazer a primeira interação de um hardware [espressif32](https://www.espressif.com/en/products/socs/esp32) com a plataforma [NodeIoT](https://nodeiot.app.br/).
 
 ### Passo a passo
 
-- Registre-se na plataforma [NodeIoT](https://nodeiot.app.br/register).
-  
-![Registro](https://github.com/user-attachments/assets/a476ef09-7335-486a-adc9-a17bc9648d9e)
+- [Registre-se](https://nodeiot.app.br/register) na plataforma [NodeIoT](https://nodeiot.app.br), conforme [tutorial](https://nodeiot.com.br/docs/create-account).  
+- Guarde o "Nome da instituição" definido durante seu registro. Ele será necessário para a configuração inicial do seu dispositivo.
+- [Acesse](https://nodeiot.com.br/docs/create-account#accessing-the-platform) sua conta em: [NodeIoT](https://nodeiot.app.br).
+- [Crie](https://nodeiot.com.br/docs/create-account#create-a-device) um dispositivo novo. 
+- Como sugestão, adicione ao seu dispositivo uma variável para controlar, se disponível, o led embutido (built-in) no PCB do seu hardware. Defina uma referência (Ref) para facilitar a identificação dessa variável no firmware, caso deseje desenvolver outras operações com ela, além de um nome (Variável) para visualização na plataforma. Nas configurações da variável, selecione o modo OUTPUT e informe o pino que controla o led (usualmente o pino 2, verifique documentação da fabricante para mais informações). Salve as configurações do dispositivo.
+- Copie o código do exemplo quickStart.ino abaixo e cole no arquivo principal do projeto, na IDE de sua preferência. 
+```ini
+#include <RemoteIO.h>
 
-- Guarde o "Nome da instituição" definido durante seu registro. Ele será necessário para a configuração inicial do dispositivo RemoteIO.
-- Conecte a alimentação em seu dispositivo RemoteIO e ligue-o, conforme manual disponibilizado com o produto.
-- Em seu computador, verifique os pontos de acesso Wi-Fi disponíveis e conecte em "RemoteIO". Não é necessário senha.
+RemoteIO device1;
 
-![Rede](https://github.com/user-attachments/assets/b17ac6fe-5324-402e-8c5a-25606d497fc8)
+void setup() 
+{
+  device1.begin();
+}
 
-- Após se conectar ao ponto de acesso, abra o browser de sua preferência (ex. Google Chrome, Mozilla Firefox) e acesse a URL: [http://192.168.4.1/]()
-- Na tela de configurações, insira as credenciais (nome e senha) da rede Wi-Fi que será utilizada para conexão do dispositivo. Abaixo, informe o "Nome da instituição" definido por você em seu registro [NodeIoT](https://nodeiot.app.br/register). Atente-se para preencher corretamente as informações acima solicitadas. Por último, crie um nome para identificar o dispositivo dentro da plataforma e clique em Salvar.
-
-![Setup](https://github.com/user-attachments/assets/62c7318c-cf3c-4162-b5c6-3c7955591bfd)
-
+void loop() 
+{
+  device1.loop();
+}
+```
+- Faça upload do código para seu dispositivo.
+- Reinicie o dispositivo para executar o código transferido.
+- Em seu computador, verifique os pontos de acesso Wi-Fi disponíveis e conecte-se em "RemoteIO". Não é necessário senha.
+- Após se conectar ao ponto de acesso, abra o browser de sua preferência (ex. Google Chrome, Mozilla Firefox) e acesse a URL: [http://192.168.4.1/](http://192.168.4.1/)
+- Na tela de configurações, insira as credenciais (nome e senha) da rede Wi-Fi que será utilizada para conexão do dispositivo. Abaixo, informe o "Nome da instituição" definido por você em seu registro [NodeIoT](https://nodeiot.app.br/register). Por último, informe o nome do dispositivo criado dentro da plataforma e clique em Salvar. 
+- Atente-se para preencher corretamente as informações acima solicitadas.
 - Desconecte-se do ponto de acesso "RemoteIO" e conecte à rede de sua preferência.
 - Acesse sua conta [NodeIoT](https://nodeiot.app.br/).
-
-  ![Conta](https://github.com/user-attachments/assets/d4012363-2315-498f-bfec-b707dfa7cb74)
-
-- Faça a autenticação do seu dispositivo, conforme o [tutorial](site.da.node.tutorial).
-
-  ![auth](https://github.com/user-attachments/assets/d87532be-b09a-4360-905b-5cc3433ad091)
-
-- Abra o [dashboard](https://nodeiot.app.br/dashboards) do seu dispositivo e utilize os componentes para interagir com o hardware RemoteIO.
-
-![dash](https://github.com/user-attachments/assets/e9c7f2c7-b2a4-4851-af17-6031a678b683)
+- Faça a [autenticação](https://nodeiot.com.br/docs/create-account#auth) do seu dispositivo.
+- Crie um [dashboard](https://nodeiot.com.br/docs/create-account#dashboards) para interagir com seu dispositivo físico através de um painel na plataforma.
+- Utilize as [ferramentas de dashboard](https://nodeiot.com.br/docs/create-account#tools) para inserir um "[Botão On/Off]()". Configure-o para trabalhar com o dispositivo e variável do led, criados por você. Personalize o visual, se desejar.
+- Abra o [dashboard](https://nodeiot.app.br/dashboards) do seu dispositivo e utilize os componentes para interagir com o hardware RemoteIO. 
 
 ## Documentação
 
-A [documentação RemoteIO](www) apresenta informações mais detalhadas para uso da ferramenta, onde estão disponíveis guias e exemplos para aprender a trabalhar com as entradas e saídas do dispositivo, integrando o meio físico à núvem para construir a solução ideal para seu projeto.
+A [documentação RemoteIO e NodeIoT](https://nodeiot.com.br/docs) apresenta informações mais detalhadas para uso da ferramenta, onde estão disponíveis guias e exemplos para aprender a trabalhar com as entradas e saídas do dispositivo, integrando o meio físico à núvem para construir a solução ideal para seu projeto.
 
