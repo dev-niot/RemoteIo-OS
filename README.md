@@ -10,7 +10,6 @@ Possibilita a leitura de sensores e acionamento de atuadores em tempo real, com 
   - [Requisitos](#requisitos)
   - [Instalação](#instalação)
     - [Usando PlatformIO](#usando-platformio)
-    - [Usando Arduino IDE](#usando-arduino-ide)
   - [Primeiro uso](#primeiro-uso)
     - [Passo a passo](#passo-a-passo)
   - [Documentação](#documentação)
@@ -25,9 +24,9 @@ Possibilita a leitura de sensores e acionamento de atuadores em tempo real, com 
 
 ## Requisitos
 - Dispositivo [espressif32](https://www.espressif.com/en/products/socs/esp32).
-- [PlatformIO](http://platformio.org) ou [Arduino IDE](https://www.arduino.cc/en/software).
+- [PlatformIO](http://platformio.org).
 - Conta [NodeIoT](https://nodeiot.app.br/register).
-- Última versão estável do [esp32 Arduino core](https://github.com/espressif/arduino-esp32) instalada em sua IDE ([PlatformIO](http://platformio.org) ou [Arduino IDE](https://www.arduino.cc/en/software)).
+- Última versão estável do [esp32 Arduino core](https://github.com/espressif/arduino-esp32) instalada em sua IDE ([PlatformIO](http://platformio.org)).
 
 ## Instalação
 
@@ -47,7 +46,6 @@ framework = arduino
 # latest stable version
 lib_deps = gkraemer-niot@RemoteIO
 ```
-### Usando Arduino IDE
 
 ## Primeiro uso
 
@@ -59,8 +57,8 @@ Com os passos abaixo você poderá fazer a primeira interação de um hardware [
 - Guarde o "Nome da instituição" definido durante seu registro. Ele será necessário para a configuração inicial do seu dispositivo.
 - [Acesse](https://nodeiot.com.br/docs/create-account#accessing-the-platform) sua conta em: [NodeIoT](https://nodeiot.app.br).
 - [Crie](https://nodeiot.com.br/docs/create-account#create-a-device) um dispositivo novo. 
-- Como sugestão, adicione ao seu dispositivo uma variável para controlar, se disponível, o led embutido (built-in) no PCB do seu hardware. Defina uma referência (Ref) para facilitar a identificação dessa variável no firmware, caso deseje desenvolver outras operações com ela, além de um nome (Variável) para visualização na plataforma. Nas configurações da variável, selecione o modo OUTPUT e informe o pino que controla o led (usualmente o pino 2, verifique documentação da fabricante para mais informações). Salve as configurações do dispositivo.
-- Copie o código do exemplo quickStart.ino abaixo e cole no arquivo principal do projeto, na IDE de sua preferência. 
+- Como sugestão, adicione ao seu dispositivo uma variável para controlar, se disponível, o led embutido (built-in) no PCB do seu hardware. Defina uma referência (Ref) para facilitar a identificação dessa variável no firmware (caso deseje desenvolver outras operações com ela), além de um nome (Variável) para visualização na plataforma. Nas configurações da variável, selecione o modo OUTPUT e informe o pino que controla o led (usualmente o pino 2, verifique documentação da fabricante para mais informações). Salve as configurações do dispositivo.
+- Copie o código do exemplo quickStart.ino abaixo e cole no arquivo principal do projeto em sua IDE. 
 ```ini
 #include <RemoteIO.h>
 
@@ -139,6 +137,7 @@ Exemplo:
 Envia à plataforma um novo valor "value" para a variável "variable".
 
 Se em seu dispositivo na NodeIoT você tiver uma variável cuja referência(Ref) é: sensor_temperatura
+
 Exemplo:
 ```ini
   espPOST("sensor_temperatura", "22.4");    // atualiza o valor que mostra a temperatura na plataforma
